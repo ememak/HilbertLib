@@ -1,57 +1,49 @@
-#include "MDPoint.h"
-#include "MyTree.h"
 #ifndef HILBERTLIBDEFINED
 #define HILBERTLIBDEFINED
 
-void HilbertLibPartition (MDPoint * MyPoints,
+void HilbertLibPartition (coord_t * MyPoints,
 			  int MyPointsCount,
 			  int RootRank,
 			  int Dimensions,
 			  int BitsPrecision,
 			  int rank,
 			  int size,
-			  MDPoint * *NewDataPtr,
+			  coord_t * *NewDataPtr,
+			  coord_t * *NewDataIdx,
 			  int *NewDataSize);
+/*
+MTNode *HilbertLibPrepareNodeForQueries (
+					coord_t * Data,
+					int DataSize,
+					int Dimensions);
 
-MTNode *HilbertLibPrepareNodeForQueries (MDPoint *
-					 Data,
-					 int
-					 DataSize,
-					 int
-					 Dimensions);
-
-void exchangeNumberOfQueries (int * *RecvSend,
-			      int
-			      NumberOfProcesses,
-			      int numberOfQueries);
-
-void sendQuery (coord_t * LD, coord_t * RD, int NumberOfProcesses, int Dimensions, MDPoint * *Res, int *ResSize, int MyRank, int Counter,	// unique (for query) number in <0,n-1>, where n is # of querie
-		 MPI_Request * Request, unsigned char * *BigBuff,	// should be NULL on first query and freed after
-		 int numberOfMyQueries);
-
-void answerQueries (int NumberOfProcesses,
+void answerPointQuery (int QuerySender,
 		    int Dimensions,
-		    MDPoint * Data,
+		    coord_t * Data,
 		    int DataSize,
 		    MTNode * Root,
-		    int *RecvCount,
 		    int MyRank,
-		    MDPoint ***
-		    *SelfQueriesResult,
-		    int * *SelfQueriesResultCount,
-		    int * *SelfQueriesRank,
-		    int *SelfQueriesCount,
-		    unsigned char * BigBuff);
+		    coord_t ** *SelfQueryResult,
+		    int *SelfQueryResultCount,
+		    coord_t* LD,
+		    coord_t* RD);
 
-void recvQueries (MDPoint * *NewNeighbours,
+void answerProcessQuery (int QuerySender,
+		    int Dimensions,
+		    MTNode * Root,
+		    int MyRank,
+		    int ** Processes,
+		    int * ProcessesCount,
+		    coord_t* LD,
+		    coord_t* RD);
+
+void recvPointQuery (coord_t * *NewNeighbours,
 		  int *NewNeighboursSize,
-		  MDPoint **** Results,
+		  coord_t *** Results,
+		  int * ResultsSize,
 		  int Dimensions,
 		  int ProcessCount,
-		  int QueriesCount,
-		  int selfQueriesCount,
-		  MDPoint *** SelfQueriesResult,
-		  int *SelfQueriesResultCount,
-		  int *SelfQueriesRank,
-		  int MyRank);
+		  coord_t ** SelfQueryResult,
+		  int SelfQueryResultCount,
+		  int MyRank);*/
 #endif

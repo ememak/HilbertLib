@@ -1,6 +1,7 @@
 #ifndef MYTREEINCLUDED
 #define MYTREEINCLUDED
 
+#include "MDPoint.h"
 #include "AxesTranspose.h"
 #include "PtrVector.h"
 #include <stdlib.h>
@@ -25,13 +26,13 @@ void makeMTNode (MTNode * foo, int dimdiv,
 		 coord_t val);
 
 void MTmake (MTNode * Node,
-	     coord_t * *Data,
+	     MDPoint * *Data,
 	     int DataSize,
 	     int Dimensions, int ActDim);
 void MTQuery (MTNode * Node,
 	      coord_t * LD,
 	      coord_t * RD,
-	      coord_t ** *Res,
+	      MDPoint ** *Res,
 	      int *ResSize, int Dimensions);
 void MTDelete (MTNode * Node);
 #endif

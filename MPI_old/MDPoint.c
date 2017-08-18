@@ -19,7 +19,7 @@ MDPointRemove (MDPoint * X)
 }
 
 int
-MDPointPack (char *ptr, MDPoint * X, int dims)
+MDPointPack (unsigned char *ptr, MDPoint * X, int dims)
 {
 	int i;
 	memcpy (ptr, X->coordinates, sizeof (coord_t) * dims);
@@ -29,7 +29,7 @@ MDPointPack (char *ptr, MDPoint * X, int dims)
 }
 
 int
-MDPointUnpack (char *ptr, MDPoint * Res, int dims)
+MDPointUnpack (unsigned char *ptr, MDPoint * Res, int dims)
 {
 	make_MDPoint (Res, dims);
 	memcpy (Res->coordinates, ptr, sizeof (coord_t) * dims);

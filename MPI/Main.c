@@ -1,232 +1,219 @@
-#include <string.h>
+#include <assert.h>
 #include <stdbool.h>
-#include <mpi.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <time.h>
 #include "AxesTranspose.h"
 #include "HilbertLib.h"
-#include <assert.h>
-#include "MDPoint.h"
-#include "MyTree.h"
-#include "Pair.h"
 #define calloc(a,b) (a==0 ? NULL : calloc(a,b))
-#include<mpi.h>
-#include<stdlib.h>
-#include<stdio.h>
-#include "HilbertLib.h"
 
 #define ROOT 0
 #define DIMENSIONS 3
-#define BITS_PRECISION 20
+#define BITS_PRECISION 25
+#define NR_OF_QUERIES 1
+const int SWITCH=1;
 
 
 coord_t
 rand_coord_t ()
 {
-	return rand () % (1ll << BITS_PRECISION - 1);
+	return (RAND_MAX*rand ()+rand()) % (1ll << BITS_PRECISION - 1);
 }
 
 int
 main (int argc, char *argv[])
 {
-	int xxx = atoi(argv[1]);
-	// Initialization
-	MPI_Init (&argc, &argv);
-	MPI_Barrier(MPI_COMM_WORLD);
-	double begin = MPI_Wtime();
-
-	int rank, size;
-	MPI_Comm_rank (MPI_COMM_WORLD, &rank);
-	FILE *File;
-	char *arr = calloc (100, sizeof (char));;
-	sprintf (arr, "MainOutput%d", rank);
-	File = fopen (arr, "w");
-	free (arr);
-	MPI_Comm_size (MPI_COMM_WORLD, &size);
-	MDPoint *MyPoints;
-	int MyPointsCount;
-	int i, j;
+	FILE *File = fopen ("./out/MainOutput0", "w");
+	
+	coord_t *MyPoints=NULL;
+	int MyPointsCount=0;
+	int i, j, k;
+	double * inp=NULL;
+	double *mind=NULL, *maxd=NULL;
+	coord_t* idx=NULL;
+	//int seed = time(0)+rank+size;
 	// Random Input Generation
-	if (1 | (rank != 0))
-	  {
-		  MyPointsCount = xxx;
-		  srand (time (0) + rank + size);
-		  MyPoints = calloc (MyPointsCount, sizeof (MDPoint));
-		  for (i = 0; i < MyPointsCount; i++)
-		    {
-			    make_MDPoint (&MyPoints[i], DIMENSIONS);
-			    for (j = 0; j < DIMENSIONS; j++)
-			      {
-				      MyPoints[i].coordinates
-					      [j] = rand_coord_t ();
-			      }
-			    MyPoints[i].own_data_id =
-				    MyPoints[i].coordinates[0] ^ 17;
-		    }
-	  }
-	else
-	  {
-		  MyPointsCount = 11659;
-		  MyPoints = calloc (MyPointsCount, sizeof (MDPoint));
-		  for (i = 0; i < MyPointsCount; i++)
-		    {
-			    make_MDPoint (&MyPoints[i], DIMENSIONS);
-			    for (j = 0; j < DIMENSIONS; j++)
-			      {
-				      scanf ("%d ",
-					     &MyPoints[i].
-					     coordinates[j]);
-			      }
-		    }
-	  }
-
+	srand(time(0)*516056890);
+	MyPointsCount = 1000000;
+	for(k=0; k<100; k++){
+	MyPoints = malloc((DIMENSIONS+1) * MyPointsCount * sizeof(coord_t));
+	for(i=0; i<MyPointsCount; i++){
+	    MyPoints[i*(DIMENSIONS+1)] = i;
+	    MyPoints[i*(DIMENSIONS+1)+1] = rand_coord_t();
+	    MyPoints[i*(DIMENSIONS+1)+2] = rand_coord_t();
+	    MyPoints[i*(DIMENSIONS+1)+3] = rand_coord_t();
+	    //MyPoints[i*(DIMENSIONS+1)+4] = rand_coord_t();
+	    //MyPoints[i*(DIMENSIONS+1)+5] = rand_coord_t();
+	}
 	//Printing genereated points
-	for (i = 0; i < MyPointsCount; i++)
+	/*for (i = 0; i < MyPointsCount; i++)
 	  {
 		  fprintf (File, "Punkt #%d : ", i);
-		  for (j = 0; j < DIMENSIONS; j++)
-		    {
-			    fprintf (File, "%u ",
-				     MyPoints[i].coordinates[j]);
-		    }
+		  fprintf (File, "%d %d %d ", MyPoints[(DIMENSIONS+1)*i+1], MyPoints[(DIMENSIONS+1)*i+2], MyPoints[(DIMENSIONS+1)*i+3]);
 		  fprintf (File, "\n");
-
 	  }
-	MDPoint *NewData = NULL;
+	fflush(File);*/
+	coord_t *NewData = NULL;
+	coord_t *NewIdx = NULL;
 	int NewDataCount = 0;
-	HilbertLibPartition (	// MyPoints is freed
+		HilbertLibPartition (// MyPoints is freed
 				    MyPoints,
 				    MyPointsCount,
 				    ROOT,
 				    DIMENSIONS,
 				    BITS_PRECISION,
-				    rank,
-				    size, &NewData, &NewDataCount);
-	fprintf (File, "NewDataCount[%d] = %d\n", rank, NewDataCount);
-	for (i = 0; i < NewDataCount; i++)
+				    0, 1,
+				    &NewData, &NewIdx,
+				    &NewDataCount);
+	/*coord_t *X=calloc(DIMENSIONS, sizeof(coord_t)), *Y=calloc(DIMENSIONS, sizeof(coord_t));
+	for (i = 0; i < MyPointsCount; i++)
 	  {
-
-		  fprintf (File,
-			   "rank:#%d point:#%d @@@   ", rank, i);
-		  for (j = 0; j < DIMENSIONS; j++)
-		    {
-			    fprintf (File, "%d ",
-				     NewData[i].coordinates[j]);
-			    }
-		  fprintf (File, "\n");
+		  fprintf (File, "point:#%d @@@   ", i);
+		  fprintf (File, "%d %d %d %lf\n", NewData[(DIMENSIONS+1)*i+1], NewData[(DIMENSIONS+1)*i+2], NewData[(DIMENSIONS+1)*i+3], GetHCoordinate(&NewData[(DIMENSIONS+1)*i+1], X, Y, BITS_PRECISION, DIMENSIONS));
 	  }
+	free(X);
+	free(Y);*/
 	free(NewData);
-	MPI_Barrier(MPI_COMM_WORLD);
-	double end = MPI_Wtime();
-	if(rank == 0)
-		printf("OVERALL TIME : %f\n",end-begin);
-	MPI_Barrier(MPI_COMM_WORLD);
-	MPI_Finalize() ;
+	}
 	fclose(File);
 	return 0;
-	MTNode *MyTreeRoot = HilbertLibPrepareNodeForQueries (NewData,
+	/*MTNode *MyTreeRoot = HilbertLibPrepareNodeForQueries (NewData,
 							      NewDataCount,
 							      DIMENSIONS);
-	int *number_of_queries;
-	MDPoint *QueryPoints;
-	int QueryPointsSize;
-	MPI_Request req1;
-	unsigned char *BigBuff = NULL;
-	MDPoint ***SelfQueriesResult;
-	int *SelfQueriesResultCount;
-	int *SelfQueriesRank;
-	int SelfQueriesCount;
-
-
-	if (rank == 0)
-	  {
-		  exchangeNumberOfQueries (&number_of_queries, size, 1);
-		  coord_t *LD = calloc (DIMENSIONS,
-					sizeof (coord_t));
-		  coord_t *RD = calloc (DIMENSIONS,
-					sizeof (coord_t));
-		  for (i = 0; i < DIMENSIONS; i++)
-		    {
-			    LD[i] = rand_coord_t ();
-			    RD[i] = rand_coord_t ();
-			    if (LD[i] > RD[i])
-			      {
-				      LD[i] ^= RD[i];
-				      RD[i] ^= LD[i];
-				      LD[i] ^= RD[i];
-			      }
-			    assert (LD[i] <= RD[i]);
-		    }
-		  sendQuery (LD,
-			     RD,
-			     size,
-			     DIMENSIONS,
-			     &QueryPoints,
-			     &QueryPointsSize,
-			     rank, 0, &req1, &BigBuff, 1);
-		  for(i=0;i<DIMENSIONS;i++) {
-			printf("%d LD = %d, RD = %d\n",i,LD[i],RD[i]);
-		  }
-		  free(LD);
-		  free(RD);
+	MDPoint **SelfQueryResult=NULL;
+	int SelfQueryResultCount=0;
+	coord_t *LD = calloc (DIMENSIONS, sizeof (coord_t));
+	coord_t *RD = calloc (DIMENSIONS, sizeof (coord_t));
 		
-		  printf("free %p\n",&req1);
-	  }
-	else
+	if (rank == 0)
 	  {
-		  exchangeNumberOfQueries (&number_of_queries, size, 0);
-	  }
-	answerQueries (size,
-		       DIMENSIONS,
-		       NewData,
-		       NewDataCount,
-		       MyTreeRoot,
-		       number_of_queries,
-		       rank,
-		       &SelfQueriesResult,
-		       &SelfQueriesResultCount,
-		       &SelfQueriesRank, &SelfQueriesCount,
-		       BigBuff);
-	MPI_Barrier(MPI_COMM_WORLD);
-	MDPoint *NewNeighbours;
+		double *LDD=NULL;
+		double *RDD=NULL;
+		if(SWITCH==2 || SWITCH==3){
+		    LDD=calloc(DIMENSIONS, sizeof(double));
+		    RDD=calloc(DIMENSIONS, sizeof(double));
+		}
+		for(j=0; j<NR_OF_QUERIES; j++){
+		    for (i = 0; i < DIMENSIONS; i++)
+		    {
+			LD[i] = rand_coord_t ();
+			RD[i] = rand_coord_t ();
+			if (LD[i] > RD[i])
+			    {
+				LD[i] ^= RD[i];
+				RD[i] ^= LD[i];
+				LD[i] ^= RD[i];
+			    }
+			assert(LD[i]<=RD[i]);
+			}
+		    if(SWITCH==2 || SWITCH==3){
+			toPos(LD, LDD, mind, maxd, DIMENSIONS, BITS_PRECISION);
+			toPos(RD, RDD, mind, maxd, DIMENSIONS, BITS_PRECISION);
+			printf("Query: %d from process: %d\n", j, rank);
+			for(i=0;i<DIMENSIONS;i++) {
+			    printf("%d LDD = %lf, RDD = %lf\n",i,LDD[i],RDD[i]);
+			}
+			free(LDD);
+			free(RDD);
+		    }
+		    else{
+			printf("Query: %d from process: %d\n", j, rank);
+			for(i=0;i<DIMENSIONS;i++) {
+			    printf("%d LD = %d, RD = %d\n",i,LD[i],RD[i]);
+			}
+		    }
+		}
+		fflush(stdout);
+	}
+	int * procsRes=NULL;
+	int procsResCount=0;
+	answerPointQuery(0,
+			DIMENSIONS,
+			NewData,
+			NewDataCount,
+			MyTreeRoot,
+			rank,
+			&SelfQueryResult,
+			&SelfQueryResultCount,
+			LD, RD);
+	MDPoint *NewNeighbours=NULL;
 	int NewNeighboursSize = 0;
-	MDPoint ***Results;
-	int *ResultsSize;
+	MDPoint **Results=NULL;
+	int ResultsSize=0;
 
 	if (rank == 0)
 	  {
-		  recvQueries (&NewNeighbours,
-			       &NewNeighboursSize,
-			       &Results, DIMENSIONS, size, 1,
-				number_of_queries[rank],
-				SelfQueriesResult,
-				SelfQueriesRank,
-				SelfQueriesResultCount,
-				rank
-			      );
-		  int q;
-		  for(q=0;q<1;q++) {
-			  printf("Wyniki %d\n",q);
-			  for(i=0;i<ResultsSize[0];i++) {
-				for(j=0;j<DIMENSIONS;j++) {
-					printf("%d ",Results[q][i]->coordinates[j]);
+		  recvPointQuery(&NewNeighbours,
+				&NewNeighboursSize,
+				&Results, &ResultsSize, 
+				DIMENSIONS, size, 
+				SelfQueryResult,
+				SelfQueryResultCount,
+				rank);
+		  if(SWITCH==1){
+			printf("ResultsSize: %d\nResults:\n", ResultsSize);
+			for(i=0; i<ResultsSize; i++){
+				for(j=0; j<DIMENSIONS; j++) {
+					printf("%d ", Results[i]->coordinates[j]);
 				}
 				printf("\n");
-	
-			  }
-		}
+			}
+		  }
+		  if(SWITCH==2 || SWITCH ==3){
+			printf("ResultsSize: %d\nResults:\n", ResultsSize);
+			for(i=0; i<ResultsSize; i++) {
+			    for(j=0; j<DIMENSIONS; j++) {
+				printf("%lf ", inp[DIMENSIONS * Results[i]->own_data_id + j]);
+			    }
+			printf("\n");
+			}
+		    free(inp);
+		    free(idx);
+		  }
 	  }
+	answerProcessQuery(0,
+			DIMENSIONS,
+			MyTreeRoot,
+			rank,
+			&procsRes,
+			&procsResCount,
+			LD, RD);
+	if(rank==0){
+	    printf("ProcsRes:\n");
+	    for(i=0; i<procsResCount; i++){
+		printf("%d ", procsRes[i]);
+	    }
+	    printf("\n");
+	}
+	MPI_Barrier(MPI_COMM_WORLD);
+	if(SWITCH ==2 || SWITCH==3){
+	    free(mind);
+	    free(maxd);
+	}
+	free(LD);
+	free(RD);
 	for (i = 0; i < NewDataCount; i++)
 	  {
-		  MDPointRemove (&NewData[i]);
+		MDPointRemove (&NewData[i]);
 	  }
+	free (NewData);
 	for (i=0;i<NewNeighboursSize;i++) {
 		MDPointRemove (&NewNeighbours[i]);
 	}
+	free (NewNeighbours);
 	MTDelete (MyTreeRoot);
-	free (NewData);
-	free (BigBuff);
-	fclose (File);
-	MPI_Wait(&req1,MPI_STATUSES_IGNORE);
+	for(i=0; i<SelfQueryResultCount; i++){
+		MDPointRemove(SelfQueryResult[i]);
+	}
+	free (SelfQueryResult);
+	if(rank==0){
+		for(i=0; i<ResultsSize; i++){
+		    MDPointRemove(Results[i]);
+		}
+	}
+	free(Results);
+	//fclose (File);
 	MPI_Finalize ();
 
 	return 0;
@@ -262,3 +249,4 @@ main (int argc, char *argv[])
 	//free(line);*/
 	//MPI_File_close(fh);
 }
+

@@ -25,10 +25,15 @@ typedef unsigned int hilpos_t;
 typedef double hilpos_t;
 #define MPI_HILPOS_T MPI_DOUBLE
 #define HILPOS_T_MAX_VALUE ((hilpos_t)1e200)
-#define HILPOS_EPS ((hilpos_t)(1.0e-10))
+#define HILPOS_EPS ((hilpos_t)(1.0e-15))
 #define HILPOS_BS_1 ((hilpos_t)0)
 #define HILPOS_BS_2 ((hilpos_t)2)
+#define HILPOS_MARGIN ((hilpos_t)(1.0e10)) //should be sth like 1.0e(BITS_PRECISION-15), but BITS_PRECISION is in main.c
 
+
+typedef unsigned int tag_t;
+#define MPI_TAG_T MPI_UNSIGNED
+typedef unsigned int amount_t;
 
 static hilpos_t
 GetHCoordinate (coord_t * Z, coord_t * X, coord_t * Y, int b, int n)
@@ -57,6 +62,7 @@ GetHCoordinate (coord_t * Z, coord_t * X, coord_t * Y, int b, int n)
 			t ^= (Q - 1);
 	for (i = 0; i < n; i++)
 		X[i] ^= t;
+	int nob = sizeof (coord_t) * 8;
 	int wsk = 0;
 	int wskbits = 0;
 	Y[0] = 0;
@@ -64,10 +70,10 @@ GetHCoordinate (coord_t * Z, coord_t * X, coord_t * Y, int b, int n)
 	  {
 		  for (j = 0; j < n; j++)
 		    {
-			    Y[wsk] <<= 1;
+			    Y[wsk] *= 2;
 			    Y[wsk] += ((X[j] >> i) & 1);
 			    wskbits++;
-			    if (wskbits == b)
+			    if (wskbits == nob)
 			      {
 				      wskbits = 0;
 				      wsk++;
@@ -83,6 +89,7 @@ GetHCoordinate (coord_t * Z, coord_t * X, coord_t * Y, int b, int n)
 		  res += akt_val * Y[i];
 		  akt_val *= (hilpos_t) (1 << b);
 	  }
+
 	return res;
 }
 
