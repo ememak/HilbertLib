@@ -229,6 +229,40 @@ MTQueryLocal (MTNode * Node,
 }
 
 void
+MTQueryLocal2 (MTNode * Node,
+	      coord_t * LD,
+	      coord_t * RD, int * r, int Dimensions)
+{
+	if (Node->right == NULL)
+	  {
+		  if (Node->left == NULL)
+		      return;
+		  int i;
+		  for (i = 0; i < Dimensions; i++)
+		    {
+		        coord_t x =(((coord_t **)
+				 (Node->left))[0])[i+1];
+			    if ((x < LD[i]) || (x > RD[i]))
+			    return;
+		    }
+		    (*r)=1;
+		  return;
+	  }
+#ifdef MYTREEMINMAX
+	if (Node->max < LD[Node->dim] || Node->min > RD[Node->dim])
+		return;
+#endif
+	if (LD[Node->dim] <= Node->val)
+	  {
+		  MTQueryLocal2 (Node->left, LD, RD, r, Dimensions);
+	  }
+	if (RD[Node->dim] > Node->val)
+	  {
+		  MTQueryLocal2 (Node->right, LD, RD, r, Dimensions);
+	  }
+}
+
+void
 MTQuery (MTNode * Node,
 	 coord_t * LD,
 	 coord_t * RD, coord_t ** *Res, int *ResSize, int Dimensions)
@@ -240,4 +274,13 @@ MTQuery (MTNode * Node,
 	*ResSize = vec.size;
 	memcpy (*Res, vec.arr, (*ResSize) * sizeof (coord_t *));
 	PtrVectorDeallocate (&vec);
+}
+
+void
+MTQuery2 (MTNode * Node,
+	 coord_t * LD,  coord_t * RD, int * Res, int Dimensions)
+{
+	int w = 0;
+	MTQueryLocal2 (Node, LD, RD, &w, Dimensions);
+	(*Res)=w;
 }

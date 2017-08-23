@@ -30,48 +30,58 @@ typedef double hilpos_t;
 #define HILPOS_BS_2 ((hilpos_t)2)
 
 
-static hilpos_t
+static inline hilpos_t
 GetHCoordinate (coord_t * Z, coord_t * X, coord_t * Y, int b, int n)
 {				// position,bits,dimensions, Z,Y is used
 	memcpy (X, Z, sizeof (coord_t) * n);
 	coord_t M = (1 << (b - 1)), P, Q, t;
-	int i, j;
-	for (Q = M; Q > 1; Q >>= 1)
+	int i, j, tmp;
+	for (Q = M, j = b - 1; Q > 1; Q >>= 1, j--)
 	  {
 		  P = Q - 1;
 		  for (i = 0; i < n; i++)
-			  if ((X[i] & Q) > 0)
+			  /*if ((X[i] & Q) > 0)
 				  X[0] ^= P;
 			  else
 			    {
 				    t = ((X[0] ^ X[i]) & P);
 				    X[0] ^= t;
 				    X[i] ^= t;
-			    }
+			    }*/ //old, more readable (but slower) version of code below
+			  {
+				    tmp = (X[i] & Q) >> j;
+				    t = ((1 ^ tmp) * ((X[0] ^ X[i]) & P));
+				    X[0] ^= ((tmp * P) ^ t);
+				    X[i] ^= t;
+			  }
 	  }
 	for (i = 1; i < n; i++)
 		X[i] ^= X[i - 1];
 	t = 0;
-	for (Q = M; Q > 1; Q >>= 1)
-		if ((X[n - 1] & Q) > 0)
-			t ^= (Q - 1);
+	for (j = b-1; j > 0;j--)
+		{
+		    t ^= ((X[n-1] & (1 << j)) >> j)*((1 << j) - 1);
+		}
+	/*for(Q=M; Q>1; Q>>=1){ // old, more readable version of loob above
+	    if ((X[n - 1] & Q) > 0)
+		t ^= (Q - 1);
+	}*/
 	for (i = 0; i < n; i++)
 		X[i] ^= t;
 	int wsk = 0;
 	int wskbits = 0;
-	Y[0] = 0;
+	memset(Y, 0, n * sizeof(coord_t));
 	for (i = b - 1; i >= 0; i--)
 	  {
 		  for (j = 0; j < n; j++)
 		    {
-			    Y[wsk] <<= 1;
-			    Y[wsk] += ((X[j] >> i) & 1);
+			    //Y[wsk] <<= 1; //use this without this last bitshift from line below
+			    Y[wsk] += ((X[j] >> i) & 1) << (b - 1 - wskbits);
 			    wskbits++;
 			    if (wskbits == b)
 			      {
 				      wskbits = 0;
 				      wsk++;
-				      Y[wsk] = 0;
 			      }
 		    }
 	  }
@@ -83,6 +93,7 @@ GetHCoordinate (coord_t * Z, coord_t * X, coord_t * Y, int b, int n)
 		  res += akt_val * Y[i];
 		  akt_val *= (hilpos_t) (1 << b);
 	  }
+
 	return res;
 }
 

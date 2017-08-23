@@ -33,5 +33,10 @@ void MTQuery (MTNode * Node,
 	      coord_t * RD,
 	      coord_t ** *Res,
 	      int *ResSize, int Dimensions);
+void MTQuery2 (MTNode * Node,
+	      coord_t * LD,
+	      coord_t * RD,
+	      int *Res,
+	      int Dimensions);
 void MTDelete (MTNode * Node);
 #endif

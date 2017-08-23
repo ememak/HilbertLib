@@ -1,5 +1,6 @@
 #ifndef HILBERTLIBDEFINED
 #define HILBERTLIBDEFINED
+#include "MyTree.h"
 
 void HilbertLibPartition (coord_t * MyPoints,
 			  int MyPointsCount,
@@ -8,10 +9,12 @@ void HilbertLibPartition (coord_t * MyPoints,
 			  int BitsPrecision,
 			  int rank,
 			  int size,
-			  coord_t * *NewDataPtr,
-			  coord_t * *NewDataIdx,
+			  double * oldPoints,
+			  int * oldIdx,
+			  double * *NewDataPtr,
+			  int * *NewDataIdx,
 			  int *NewDataSize);
-/*
+
 MTNode *HilbertLibPrepareNodeForQueries (
 					coord_t * Data,
 					int DataSize,
@@ -23,6 +26,8 @@ void answerPointQuery (int QuerySender,
 		    int DataSize,
 		    MTNode * Root,
 		    int MyRank,
+		    double* data,
+		    int * dataIdx,
 		    coord_t ** *SelfQueryResult,
 		    int *SelfQueryResultCount,
 		    coord_t* LD,
@@ -37,13 +42,17 @@ void answerProcessQuery (int QuerySender,
 		    coord_t* LD,
 		    coord_t* RD);
 
-void recvPointQuery (coord_t * *NewNeighbours,
-		  int *NewNeighboursSize,
-		  coord_t *** Results,
-		  int * ResultsSize,
-		  int Dimensions,
-		  int ProcessCount,
-		  coord_t ** SelfQueryResult,
-		  int SelfQueryResultCount,
-		  int MyRank);*/
+void recvPointQuery(double * *NewNeighbours,
+		int * *NewNeighboursIdx,
+		int *NewNeighboursSize,
+		double * *Results,
+		int * *ResultsIdx,
+		int *ResultsSize,
+		int Dimensions,
+		int ProcessCount,
+		double * data,
+		int * dataIdx,
+		coord_t ** SelfQueryResult,
+		int SelfQueryResultCount,
+		int MyRank);
 #endif
